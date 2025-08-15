@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Buscador de Usuarios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background-color: #f2f2f2;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        input[type="text"] {
+            width: 80%;
+            padding: 10px;
+            font-size: 16px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        .resultado {
+            margin-top: 20px;
+            background: #e6f7ff;
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Buscador de Usuarios por NIT</h2>
+    <input type="text" id="nitInput" placeholder="Ingrese NIT">
+    <button onclick="buscarUsuario()">Buscar</button>
+
+    <div id="resultado" class="resultado" style="display:none;"></div>
+</div>
+
+<script>
+    // URL de tu API FastAPI
+    const API_URL = "http://127.0.0.1:8000/usuarios/";
+
+    async function buscarUsuario() {
+        const nit = document.getElementById("nitInput").value.trim();
+        const resultadoDiv = document.getElementById("resultado");
+
+        if (!nit) {
+            resultadoDiv.style.display = "block";
+            resultadoDiv.innerHTML = '<p class="error">Por favor ingrese un NIT.</p>';
+            return;
+        }
+
+        try {
+            const response = await fetch(API_URL + nit);
+            
+            if (!response.ok) {
+                const errorData = await response.json();
+                resultadoDiv.style.display = "block";
+                resultadoDiv.innerHTML = `<p class="error">${errorData.detail || 'Usuario no encontrado'}</p>`;
+                return;
+            }
+
+            const usuario = await response.json();
+
+            // Mostrar solo campos filtrados y truncar ID a 8 caracteres
+            resultadoDiv.style.display = "block";
+            resultadoDiv.innerHTML = `
+                <p><strong>ID:</strong> ${usuario._id.substring(0, 8)}</p>
+                <p><strong>Nombre:</strong> ${usuario.name} ${usuario.lastname}</p>
+                <p><strong>Negocio:</strong> ${usuario.business_name || "N/A"}</p>
+                <p><strong>Cupo:</strong> ${usuario.quota}</p>
+                <p><strong>Cupo Disponible:</strong> ${usuario.available_quota}</p>
+                <p><strong>Estado del cupo:</strong> ${usuario.quota_status}</p>
+                <p><strong>Estado:</strong> ${usuario.status}</p>
+                <p><strong>Teléfono:</strong> ${usuario.phone}</p>
+                <p><strong>Email:</strong> ${usuario.email}</p>
+                <p><strong>NIT:</strong> ${usuario.nit || "N/A"}</p>
+                <p><strong>Sucursal:</strong> ${usuario.branch_office}</p>
+                <p><strong>Creado por:</strong> ${usuario.created_by}</p>
+                <p><strong>Fecha de creación:</strong> ${usuario.created_at}</p>
+                <p><strong>Balance:</strong> ${usuario.balance ?? "N/A"}</p>
+            `;
+
+        } catch (error) {
+            resultadoDiv.style.display = "block";
+            resultadoDiv.innerHTML = `<p class="error">Error conectando a la API: ${error.message}</p>`;
+        }
+    }
+</script>
+
+</body>
+</html>
